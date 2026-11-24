@@ -71,7 +71,9 @@
   }
 
   /* In a desktop browser, frame the app like a phone-sized window */
-  html.web #app { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--rim); border-right: 1px solid var(--rim); }
+  /* Backdrop around the phone frame stays dark in both themes */
+  html.web body { background: #060d14; }
+  html.web #app { background: var(--bg); max-width: 430px; margin: 0 auto; border-left: 1px solid var(--rim); border-right: 1px solid var(--rim); }
   html.web #drag { display: none; }
 
   /* drag region for frameless window */
