@@ -11,7 +11,6 @@ A dark-themed tracker for logging the ski resorts you've visited across 181 reso
 - **Search & filter** — full-text search across name, country, region and description; country chips; "visited only" toggle
 - **Sorting** — A→Z, Z→A, or visited first
 - **Live stats** — resorts visited, countries, and continents, recalculated on every change
-- **"Next up" spotlight** — suggests the next resort you haven't skied yet
 - **Map & Profile tabs** — breakdown of progress by country and continent
 - **Persistence** — saves to a local data file on desktop, or to `localStorage` in the browser
 

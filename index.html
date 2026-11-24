@@ -112,6 +112,8 @@
     color: var(--snow);
   }
   .page-title span { color: var(--ice); font-weight: 300; }
+  .page-header { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 30px; height: 22px; flex-shrink: 0; fill: var(--snow); }
 
   /* ── Stats strip ── */
   #stats-strip {
@@ -197,43 +199,6 @@
   }
   #country-row::-webkit-scrollbar { display: none; }
 
-  /* ── Spotlight ── */
-  #spotlight {
-    margin: 12px 16px 0;
-    background: var(--s1);
-    border: 1px solid var(--rim);
-    border-radius: var(--r);
-    padding: 14px 16px;
-    display: none;
-  }
-  #spotlight.visible { display: block; }
-  .spotlight-eyebrow {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--gold);
-    margin-bottom: 4px;
-  }
-  .spotlight-name {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--snow);
-    margin-bottom: 2px;
-  }
-  .spotlight-location { color: var(--soft); font-size: 13px; margin-bottom: 10px; }
-  .spotlight-btn {
-    background: var(--ice);
-    color: #04111d;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    padding: 7px 16px;
-    cursor: pointer;
-    transition: opacity 0.12s;
-  }
-  .spotlight-btn:hover { opacity: 0.85; }
 
   /* ── Resort list ── */
   #list-header {
@@ -395,6 +360,7 @@
     <!-- Resorts -->
     <div class="page active" id="page-resorts">
       <div class="page-header">
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
         <div class="page-title">My <span>Resorts</span></div>
       </div>
       <div id="stats-strip">
@@ -411,12 +377,6 @@
         </div>
         <div id="country-row"></div>
       </div>
-      <div id="spotlight">
-        <div class="spotlight-eyebrow">Next up</div>
-        <div class="spotlight-name" id="spotlight-name"></div>
-        <div class="spotlight-location" id="spotlight-loc"></div>
-        <button class="spotlight-btn" id="spotlight-btn">Mark visited</button>
-      </div>
       <div id="list-header">
         <span class="list-title">All Resorts</span>
         <span id="result-count"></span>
@@ -427,6 +387,7 @@
     <!-- Map -->
     <div class="page" id="page-map">
       <div class="page-header">
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
         <div class="page-title">World <span>Map</span></div>
       </div>
       <div class="section-header">By Continent</div>
@@ -438,6 +399,7 @@
     <!-- Profile -->
     <div class="page" id="page-profile">
       <div class="page-header">
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
         <div class="page-title">My <span>Profile</span></div>
       </div>
       <div id="profile-hero">
@@ -580,7 +542,6 @@
 
   function render() {
     updateStats();
-    updateSpotlight();
 
     const filtered = filteredResorts();
     document.getElementById('result-count').textContent = filtered.length + ' shown';
@@ -647,21 +608,6 @@
     document.getElementById('stat-visited').textContent = visited.length;
     document.getElementById('stat-countries').textContent = countries.size;
     document.getElementById('stat-continents').textContent = continents.size;
-  }
-
-  function updateSpotlight() {
-    const next = resorts.find(r => !r.visited);
-    const el = document.getElementById('spotlight');
-    if (!next) { el.classList.remove('visible'); return; }
-    el.classList.add('visible');
-    document.getElementById('spotlight-name').textContent = next.name;
-    document.getElementById('spotlight-loc').textContent = next.region + ' · ' + next.country;
-    const btn = document.getElementById('spotlight-btn');
-    btn.onclick = () => {
-      next.visited = true;
-      window.api.saveResorts(resorts);
-      render();
-    };
   }
 
   function buildCountryChips() {
