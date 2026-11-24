@@ -205,6 +205,18 @@
     outline: none;
     transition: border-color 0.15s;
   }
+  .search-wrap { position: relative; }
+  .search-wrap #search { padding-right: 38px; }
+  #search-clear {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 26px; height: 26px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--soft); cursor: pointer;
+  }
+  #search-clear:hover { color: var(--snow); background: var(--s3); }
+  #search-clear svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+  /* Show the × only when there is text and you are not typing */
+  #search:not(:placeholder-shown):not(:focus) + #search-clear { display: flex; }
   #search::placeholder { color: var(--soft); }
   #search:focus { border-color: var(--ice-dim); }
 
@@ -444,7 +456,12 @@
         <div class="stat-cell"><div class="stat-num" id="stat-continents">0</div><div class="stat-label">Continents</div></div>
       </div>
       <div id="controls">
-        <input id="search" type="text" placeholder="Search resorts, countries, regions…">
+        <div class="search-wrap">
+          <input id="search" type="text" placeholder="Search resorts, countries, regions…" autocomplete="off">
+          <button id="search-clear" type="button" aria-label="Clear search" title="Clear search">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
         <div id="filter-row">
           <button class="chip" id="chip-visited">Visited</button>
           <button class="chip" id="chip-wishlist">★ Wishlist</button>
@@ -641,6 +658,13 @@
     document.getElementById('search').addEventListener('input', e => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => { searchQuery = e.target.value.trim().toLowerCase(); render(); }, 120);
+    });
+
+    document.getElementById('search-clear').addEventListener('click', () => {
+      clearTimeout(searchTimer);
+      document.getElementById('search').value = '';
+      searchQuery = '';
+      render();
     });
 
     document.getElementById('chip-visited').addEventListener('click', () => {
