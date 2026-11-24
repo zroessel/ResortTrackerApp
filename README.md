@@ -8,8 +8,9 @@ A dark-themed tracker for logging the ski resorts you've visited across 181 reso
 
 ## Features
 
-- **Search & filter** — full-text search across name, country, region and description; country chips; "visited only" toggle
-- **Sorting** — A→Z, Z→A, or visited first
+- **Search & filter** — full-text search across name, country, region and description; country chips; "visited only" and "wishlist" toggles
+- **Sorting** — A→Z, Z→A, visited first, or unvisited first
+- **Wishlist** — star resorts you want to ski, filter to just your wishlist; resorts drop off automatically once visited
 - **Live stats** — resorts visited, countries, and continents, recalculated on every change
 - **Map & Profile tabs** — breakdown of progress by country and continent
 - **Persistence** — saves to a local data file on desktop, or to `localStorage` in the browser

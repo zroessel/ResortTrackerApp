@@ -258,6 +258,16 @@
   }
   .toggle-btn:hover { border-color: var(--ice-dim); color: var(--ice); }
   .toggle-btn.visited { border-color: var(--green); color: var(--green); }
+  .star-btn {
+    background: none; border: none; cursor: pointer; flex-shrink: 0;
+    color: var(--muted); font-size: 18px; line-height: 1;
+    width: 28px; height: 28px; margin-right: 4px;
+    transition: color 0.12s, transform 0.12s;
+  }
+  .star-btn:hover { color: var(--gold); }
+  .star-btn.on { color: var(--gold); }
+  .star-btn:active { transform: scale(0.85); }
+  .star-btn[hidden] { display: none; }
 
   .empty-state {
     padding: 48px 20px;
@@ -372,6 +382,7 @@
         <input id="search" type="text" placeholder="Search resorts, countries, regions…">
         <div id="filter-row">
           <button class="chip" id="chip-visited">Visited only</button>
+          <button class="chip" id="chip-wishlist">★ Wishlist</button>
           <button class="chip" id="chip-sort">A → Z</button>
           <button class="chip" id="chip-clear">Clear</button>
         </div>
@@ -444,7 +455,8 @@
         const p = l.split(',');
         if (p.length < 5) return null;
         return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(),
-                 description: p[3].trim(), visited: p[4].trim() === 'true' };
+                 description: p[3].trim(), visited: p[4].trim() === 'true',
+                 wishlist: (p[5] || '').trim() === 'true' };
       })
       .filter(Boolean);
 
@@ -468,8 +480,9 @@
   let searchQuery = '';
   let selectedCountry = 'All';
   let visitedOnly = false;
-  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first
-  const sortLabels = ['A → Z', 'Z → A', 'Visited first'];
+  let wishlistOnly = false;
+  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first 3=unvisited first
+  const sortLabels = ['A → Z', 'Z → A', 'Visited first', 'Unvisited first'];
 
   const CONTINENTS = {
     'Canada': 'North America', 'USA': 'North America',
@@ -507,8 +520,14 @@
       render();
     });
 
+    document.getElementById('chip-wishlist').addEventListener('click', () => {
+      wishlistOnly = !wishlistOnly;
+      document.getElementById('chip-wishlist').classList.toggle('active', wishlistOnly);
+      render();
+    });
+
     document.getElementById('chip-sort').addEventListener('click', () => {
-      sortMode = (sortMode + 1) % 3;
+      sortMode = (sortMode + 1) % sortLabels.length;
       document.getElementById('chip-sort').textContent = sortLabels[sortMode];
       render();
     });
@@ -517,6 +536,8 @@
       searchQuery = '';
       selectedCountry = 'All';
       visitedOnly = false;
+      wishlistOnly = false;
+      document.getElementById('chip-wishlist').classList.remove('active');
       sortMode = 0;
       document.getElementById('search').value = '';
       document.getElementById('chip-visited').classList.remove('active');
@@ -573,13 +594,26 @@
     btn.textContent = resort.visited ? '✓' : '+';
     btn.addEventListener('click', () => {
       resort.visited = !resort.visited;
+      if (resort.visited) resort.wishlist = false; // skied it — off the wishlist
       window.api.saveResorts(resorts);
       render();
       buildProfilePage();
       buildMapPage();
     });
 
-    row.append(dot, info, btn);
+    const star = document.createElement('button');
+    star.className = 'star-btn' + (resort.wishlist ? ' on' : '');
+    star.textContent = resort.wishlist ? '★' : '☆';
+    star.title = resort.wishlist ? 'Remove from wishlist' : 'Add to wishlist';
+    star.hidden = resort.visited;
+    star.addEventListener('click', () => {
+      resort.wishlist = !resort.wishlist;
+      window.api.saveResorts(resorts);
+      render();
+      buildProfilePage();
+    });
+
+    row.append(dot, info, star, btn);
     return row;
   }
 
@@ -587,6 +621,7 @@
     let list = resorts.filter(r => {
       if (selectedCountry !== 'All' && r.country !== selectedCountry) return false;
       if (visitedOnly && !r.visited) return false;
+      if (wishlistOnly && !r.wishlist) return false;
       if (searchQuery) {
         const hay = (r.name + r.country + r.region + r.description).toLowerCase();
         if (!hay.includes(searchQuery)) return false;
@@ -596,7 +631,8 @@
 
     if (sortMode === 0) list.sort((a, b) => a.name.localeCompare(b.name));
     else if (sortMode === 1) list.sort((a, b) => b.name.localeCompare(a.name));
-    else list.sort((a, b) => (b.visited - a.visited) || a.name.localeCompare(b.name));
+    else if (sortMode === 2) list.sort((a, b) => (b.visited - a.visited) || a.name.localeCompare(b.name));
+    else list.sort((a, b) => (a.visited - b.visited) || a.name.localeCompare(b.name));
 
     return list;
   }
@@ -675,7 +711,7 @@
 
     const countries = new Set(visited.map(r => r.country));
     const continents = new Set(visited.map(r => continent(r.country)));
-    const wishlist = resorts.filter(r => !r.visited).length;
+    const wishlist = resorts.filter(r => r.wishlist && !r.visited).length;
 
     const statsEl = document.getElementById('profile-stats');
     statsEl.innerHTML = '';

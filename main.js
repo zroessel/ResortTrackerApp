@@ -33,12 +33,12 @@ ipcMain.handle('load-resorts', () => {
     .map(l => {
       const p = l.split(',');
       if (p.length < 5) return null;
-      return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(), description: p[3].trim(), visited: p[4].trim() === 'true' };
+      return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(), description: p[3].trim(), visited: p[4].trim() === 'true', wishlist: (p[5] || '').trim() === 'true' };
     })
     .filter(Boolean);
 });
 
 ipcMain.handle('save-resorts', (_e, resorts) => {
-  const lines = resorts.map(r => [r.name, r.country, r.region, r.description, r.visited].join(','));
+  const lines = resorts.map(r => [r.name, r.country, r.region, r.description, r.visited, !!r.wishlist].join(','));
   fs.writeFileSync(RESORTS_FILE, lines.join('\n'), 'utf8');
 });
