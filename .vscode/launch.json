@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Ski Tracker",
+            "request": "launch",
+            "mainClass": "App",
+            "vmArgs": "--module-path C:/openjfx-26_windows-x64_bin-sdk/javafx-sdk-26/lib --add-modules javafx.controls,javafx.fxml --enable-native-access=ALL-UNNAMED"
+        }
+    ]
+}

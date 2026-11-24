@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Powder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #060d14;
+    --s1:      #0b1520;
+    --s2:      #0f1c2a;
+    --s3:      #152333;
+    --rim:     #1a2d3f;
+    --ice:     #a8d8ff;
+    --ice-dim: #3d7aaa;
+    --snow:    #eaf4ff;
+    --muted:   #3a5a72;
+    --soft:    #5a7a92;
+    --gold:    #f5c842;
+    --green:   #3dd68c;
+    --red:     #e8524a;
+    --r:       10px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--snow);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Scrollbars ── */
+  ::-webkit-scrollbar { width: 0px; }
+
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* In a desktop browser, frame the app like a phone-sized window */
+  html.web #app { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--rim); border-right: 1px solid var(--rim); }
+  html.web #drag { display: none; }
+
+  /* drag region for frameless window */
+  #drag { -webkit-app-region: drag; height: 28px; background: var(--bg); flex-shrink: 0; }
+
+  #pages {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .page {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+  }
+  .page.active { display: flex; }
+
+  /* ── Tab bar ── */
+  #tabbar {
+    display: flex;
+    background: var(--bg);
+    border-top: 1px solid var(--rim);
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
+
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 0 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--soft);
+    font-size: 10px;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    transition: color 0.15s;
+  }
+  .tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .tab.active { color: var(--ice); }
+
+  /* ── Page header ── */
+  .page-header {
+    padding: 16px 20px 10px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .page-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--snow);
+  }
+  .page-title span { color: var(--ice); font-weight: 300; }
+
+  /* ── Stats strip ── */
+  #stats-strip {
+    display: flex;
+    background: var(--s1);
+    border-bottom: 1px solid var(--rim);
+  }
+  .stat-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 3px;
+  }
+  .stat-cell + .stat-cell { border-left: 1px solid var(--rim); }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--snow);
+  }
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--soft);
+  }
+
+  /* ── Search & filters ── */
+  #controls {
+    padding: 12px 16px 8px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-bottom: 1px solid var(--rim);
+  }
+
+  #search {
+    width: 100%;
+    background: var(--s1);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    color: var(--snow);
+    font-size: 14px;
+    font-family: inherit;
+    padding: 9px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search::placeholder { color: var(--soft); }
+  #search:focus { border-color: var(--ice-dim); }
+
+  #filter-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    background: var(--s1);
+    border: 1px solid var(--rim);
+    border-radius: 20px;
+    color: var(--soft);
+    font-size: 12px;
+    font-family: inherit;
+    padding: 5px 13px;
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--ice-dim); color: var(--snow); }
+  .chip.active { background: var(--s3); border-color: var(--ice-dim); color: var(--ice); }
+
+  #country-row {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  #country-row::-webkit-scrollbar { display: none; }
+
+  /* ── Spotlight ── */
+  #spotlight {
+    margin: 12px 16px 0;
+    background: var(--s1);
+    border: 1px solid var(--rim);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    display: none;
+  }
+  #spotlight.visible { display: block; }
+  .spotlight-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .spotlight-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--snow);
+    margin-bottom: 2px;
+  }
+  .spotlight-location { color: var(--soft); font-size: 13px; margin-bottom: 10px; }
+  .spotlight-btn {
+    background: var(--ice);
+    color: #04111d;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  .spotlight-btn:hover { opacity: 0.85; }
+
+  /* ── Resort list ── */
+  #list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 6px;
+  }
+  .list-title { font-size: 13px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: 0.6px; }
+  #result-count { font-size: 12px; color: var(--muted); }
+
+  #resort-list { padding: 0 0 20px; }
+
+  .resort-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--rim);
+    cursor: default;
+    transition: background 0.1s;
+  }
+  .resort-row:hover { background: var(--s1); }
+
+  .resort-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .resort-dot.visited { background: var(--green); border-color: var(--green); }
+
+  .resort-info { flex: 1; min-width: 0; }
+  .resort-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .resort-meta { font-size: 12px; color: var(--soft); margin-top: 1px; }
+
+  .toggle-btn {
+    background: none;
+    border: 1px solid var(--rim);
+    border-radius: 6px;
+    color: var(--soft);
+    font-size: 16px;
+    line-height: 1;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.12s;
+  }
+  .toggle-btn:hover { border-color: var(--ice-dim); color: var(--ice); }
+  .toggle-btn.visited { border-color: var(--green); color: var(--green); }
+
+  .empty-state {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--soft);
+    font-size: 14px;
+  }
+
+  /* ── Map page ── */
+  .section-header {
+    padding: 16px 20px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--soft);
+  }
+
+  .continent-block { margin-bottom: 6px; }
+
+  .continent-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: var(--s1);
+    border-bottom: 1px solid var(--rim);
+  }
+  .continent-name { font-size: 14px; color: var(--snow); min-width: 120px; }
+  .bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--s3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; background: var(--ice); border-radius: 2px; transition: width 0.4s; }
+  .continent-count { font-size: 12px; color: var(--soft); min-width: 36px; text-align: right; }
+
+  .country-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--rim);
+  }
+  .country-row:nth-child(odd) { background: var(--s1); }
+  .country-name { font-size: 14px; color: var(--snow); }
+  .country-count { font-size: 13px; font-weight: 600; color: var(--ice-dim); }
+  .country-count.has-visited { color: var(--ice); }
+
+  /* ── Profile page ── */
+  #profile-hero {
+    margin: 0 16px 16px;
+    background: var(--s1);
+    border: 1px solid var(--rim);
+    border-radius: var(--r);
+    padding: 24px 20px;
+    text-align: center;
+  }
+  #profile-big-num {
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    color: var(--ice);
+    line-height: 1;
+  }
+  #profile-sub {
+    font-size: 13px;
+    color: var(--soft);
+    margin-top: 6px;
+    margin-bottom: 16px;
+  }
+  #profile-bar-track {
+    height: 5px;
+    background: var(--s3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  #profile-bar-fill { height: 100%; background: var(--ice); border-radius: 3px; transition: width 0.4s; }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--rim);
+  }
+  .stat-row:nth-child(odd) { background: var(--s1); }
+  .stat-row-label { font-size: 14px; color: var(--snow); }
+  .stat-row-value { font-size: 14px; font-weight: 600; color: var(--ice); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="drag"></div>
+
+  <div id="pages">
+
+    <!-- Resorts -->
+    <div class="page active" id="page-resorts">
+      <div class="page-header">
+        <div class="page-title">My <span>Resorts</span></div>
+      </div>
+      <div id="stats-strip">
+        <div class="stat-cell"><div class="stat-num" id="stat-visited">0</div><div class="stat-label">Visited</div></div>
+        <div class="stat-cell"><div class="stat-num" id="stat-countries">0</div><div class="stat-label">Countries</div></div>
+        <div class="stat-cell"><div class="stat-num" id="stat-continents">0</div><div class="stat-label">Continents</div></div>
+      </div>
+      <div id="controls">
+        <input id="search" type="text" placeholder="Search resorts, countries, regions…">
+        <div id="filter-row">
+          <button class="chip" id="chip-visited">Visited only</button>
+          <button class="chip" id="chip-sort">A → Z</button>
+          <button class="chip" id="chip-clear">Clear</button>
+        </div>
+        <div id="country-row"></div>
+      </div>
+      <div id="spotlight">
+        <div class="spotlight-eyebrow">Next up</div>
+        <div class="spotlight-name" id="spotlight-name"></div>
+        <div class="spotlight-location" id="spotlight-loc"></div>
+        <button class="spotlight-btn" id="spotlight-btn">Mark visited</button>
+      </div>
+      <div id="list-header">
+        <span class="list-title">All Resorts</span>
+        <span id="result-count"></span>
+      </div>
+      <div id="resort-list"></div>
+    </div>
+
+    <!-- Map -->
+    <div class="page" id="page-map">
+      <div class="page-header">
+        <div class="page-title">World <span>Map</span></div>
+      </div>
+      <div class="section-header">By Continent</div>
+      <div id="continent-list"></div>
+      <div class="section-header" style="margin-top:16px">By Country</div>
+      <div id="country-list"></div>
+    </div>
+
+    <!-- Profile -->
+    <div class="page" id="page-profile">
+      <div class="page-header">
+        <div class="page-title">My <span>Profile</span></div>
+      </div>
+      <div id="profile-hero">
+        <div id="profile-big-num">0</div>
+        <div id="profile-sub">of 0 resorts visited</div>
+        <div id="profile-bar-track"><div id="profile-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="section-header">Stats</div>
+      <div id="profile-stats"></div>
+      <div class="section-header" style="margin-top:16px">Top Countries</div>
+      <div id="profile-countries"></div>
+    </div>
+
+  </div>
+
+  <div id="tabbar">
+    <button class="tab active" data-tab="resorts">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Resorts
+    </button>
+    <button class="tab" data-tab="map">
+      <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map
+    </button>
+    <button class="tab" data-tab="profile">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </button>
+  </div>
+</div>
+
+<script>
+  // ── Browser fallback ──────────────────────────────────────────────────────
+  // In Electron, preload.js exposes window.api backed by resorts.txt on disk.
+  // In a plain browser (e.g. GitHub Pages), load the same file over HTTP and
+  // persist visited state in localStorage instead.
+  if (!window.api) {
+    const STORE_KEY = 'powder.resorts.v1';
+    const parse = text => text.split('\n')
+      .map(l => l.trim()).filter(Boolean)
+      .map(l => {
+        const p = l.split(',');
+        if (p.length < 5) return null;
+        return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(),
+                 description: p[3].trim(), visited: p[4].trim() === 'true' };
+      })
+      .filter(Boolean);
+
+    window.api = {
+      async loadResorts() {
+        try {
+          const saved = localStorage.getItem(STORE_KEY);
+          if (saved) return JSON.parse(saved);
+        } catch (_) { /* storage unavailable */ }
+        const res = await fetch('resorts.txt');
+        return parse(await res.text());
+      },
+      async saveResorts(list) {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (_) {}
+      },
+    };
+    document.documentElement.classList.add('web');
+  }
+
+  let resorts = [];
+  let searchQuery = '';
+  let selectedCountry = 'All';
+  let visitedOnly = false;
+  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first
+  const sortLabels = ['A → Z', 'Z → A', 'Visited first'];
+
+  const CONTINENTS = {
+    'Canada': 'North America', 'USA': 'North America',
+    'France': 'Europe', 'Switzerland': 'Europe', 'Austria': 'Europe',
+    'Italy': 'Europe', 'Germany': 'Europe', 'Sweden': 'Europe',
+    'Norway': 'Europe', 'Finland': 'Europe', 'Bulgaria': 'Europe',
+    'Slovakia': 'Europe', 'Poland': 'Europe', 'Spain': 'Europe',
+    'Japan': 'Asia',
+    'Australia': 'Oceania', 'New Zealand': 'Oceania',
+  };
+  const continent = c => CONTINENTS[c] || 'Other';
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    resorts = await window.api.loadResorts();
+    buildCountryChips();
+    buildMapPage();
+    buildProfilePage();
+    render();
+    wireControls();
+  });
+
+  // ── Controls ──────────────────────────────────────────────────────────────
+
+  function wireControls() {
+    document.getElementById('search').addEventListener('input', e => {
+      searchQuery = e.target.value.toLowerCase();
+      render();
+    });
+
+    document.getElementById('chip-visited').addEventListener('click', () => {
+      visitedOnly = !visitedOnly;
+      document.getElementById('chip-visited').classList.toggle('active', visitedOnly);
+      render();
+    });
+
+    document.getElementById('chip-sort').addEventListener('click', () => {
+      sortMode = (sortMode + 1) % 3;
+      document.getElementById('chip-sort').textContent = sortLabels[sortMode];
+      render();
+    });
+
+    document.getElementById('chip-clear').addEventListener('click', () => {
+      searchQuery = '';
+      selectedCountry = 'All';
+      visitedOnly = false;
+      sortMode = 0;
+      document.getElementById('search').value = '';
+      document.getElementById('chip-visited').classList.remove('active');
+      document.getElementById('chip-sort').textContent = sortLabels[0];
+      buildCountryChips();
+      render();
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('page-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'profile') buildProfilePage();
+        if (btn.dataset.tab === 'map') buildMapPage();
+      });
+    });
+  }
+
+  // ── Resorts render ────────────────────────────────────────────────────────
+
+  function render() {
+    updateStats();
+    updateSpotlight();
+
+    const filtered = filteredResorts();
+    document.getElementById('result-count').textContent = filtered.length + ' shown';
+
+    const list = document.getElementById('resort-list');
+    list.innerHTML = '';
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-state">No resorts match these filters.</div>';
+      return;
+    }
+
+    filtered.forEach(r => list.appendChild(makeRow(r)));
+  }
+
+  function makeRow(resort) {
+    const row = document.createElement('div');
+    row.className = 'resort-row';
+
+    const dot = document.createElement('div');
+    dot.className = 'resort-dot' + (resort.visited ? ' visited' : '');
+
+    const info = document.createElement('div');
+    info.className = 'resort-info';
+    info.innerHTML = `<div class="resort-name">${resort.name}</div><div class="resort-meta">${resort.country} · ${resort.region}</div>`;
+
+    const btn = document.createElement('button');
+    btn.className = 'toggle-btn' + (resort.visited ? ' visited' : '');
+    btn.textContent = resort.visited ? '✓' : '+';
+    btn.addEventListener('click', () => {
+      resort.visited = !resort.visited;
+      window.api.saveResorts(resorts);
+      render();
+      buildProfilePage();
+      buildMapPage();
+    });
+
+    row.append(dot, info, btn);
+    return row;
+  }
+
+  function filteredResorts() {
+    let list = resorts.filter(r => {
+      if (selectedCountry !== 'All' && r.country !== selectedCountry) return false;
+      if (visitedOnly && !r.visited) return false;
+      if (searchQuery) {
+        const hay = (r.name + r.country + r.region + r.description).toLowerCase();
+        if (!hay.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+
+    if (sortMode === 0) list.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortMode === 1) list.sort((a, b) => b.name.localeCompare(a.name));
+    else list.sort((a, b) => (b.visited - a.visited) || a.name.localeCompare(b.name));
+
+    return list;
+  }
+
+  function updateStats() {
+    const visited = resorts.filter(r => r.visited);
+    const countries = new Set(visited.map(r => r.country));
+    const continents = new Set(visited.map(r => continent(r.country)));
+    document.getElementById('stat-visited').textContent = visited.length;
+    document.getElementById('stat-countries').textContent = countries.size;
+    document.getElementById('stat-continents').textContent = continents.size;
+  }
+
+  function updateSpotlight() {
+    const next = resorts.find(r => !r.visited);
+    const el = document.getElementById('spotlight');
+    if (!next) { el.classList.remove('visible'); return; }
+    el.classList.add('visible');
+    document.getElementById('spotlight-name').textContent = next.name;
+    document.getElementById('spotlight-loc').textContent = next.region + ' · ' + next.country;
+    const btn = document.getElementById('spotlight-btn');
+    btn.onclick = () => {
+      next.visited = true;
+      window.api.saveResorts(resorts);
+      render();
+    };
+  }
+
+  function buildCountryChips() {
+    const row = document.getElementById('country-row');
+    row.innerHTML = '';
+    const countries = ['All', ...new Set(resorts.map(r => r.country).sort())];
+    countries.forEach(c => {
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (c === selectedCountry ? ' active' : '');
+      chip.textContent = c;
+      chip.addEventListener('click', () => {
+        selectedCountry = c;
+        buildCountryChips();
+        render();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  // ── Map page ──────────────────────────────────────────────────────────────
+
+  function buildMapPage() {
+    const continentNames = ['North America', 'Europe', 'Asia', 'Oceania', 'Other'];
+    const cl = document.getElementById('continent-list');
+    cl.innerHTML = '';
+    continentNames.forEach(name => {
+      const total = resorts.filter(r => continent(r.country) === name).length;
+      const visited = resorts.filter(r => continent(r.country) === name && r.visited).length;
+      const pct = total ? (visited / total * 100) : 0;
+
+      const row = document.createElement('div');
+      row.className = 'continent-row';
+      row.innerHTML = `
+        <span class="continent-name">${name}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="continent-count">${visited}/${total}</span>`;
+      cl.appendChild(row);
+    });
+
+    const countryNames = [...new Set(resorts.map(r => r.country))].sort();
+    const clist = document.getElementById('country-list');
+    clist.innerHTML = '';
+    countryNames.forEach(c => {
+      const total = resorts.filter(r => r.country === c).length;
+      const visited = resorts.filter(r => r.country === c && r.visited).length;
+      const row = document.createElement('div');
+      row.className = 'country-row';
+      row.innerHTML = `
+        <span class="country-name">${c}</span>
+        <span class="country-count ${visited > 0 ? 'has-visited' : ''}">${visited} / ${total}</span>`;
+      clist.appendChild(row);
+    });
+  }
+
+  // ── Profile page ──────────────────────────────────────────────────────────
+
+  function buildProfilePage() {
+    const visited = resorts.filter(r => r.visited);
+    const total = resorts.length;
+    const pct = total ? (visited.length / total * 100) : 0;
+
+    document.getElementById('profile-big-num').textContent = visited.length;
+    document.getElementById('profile-sub').textContent = `of ${total} resorts visited · ${Math.round(pct)}%`;
+    document.getElementById('profile-bar-fill').style.width = pct + '%';
+
+    const countries = new Set(visited.map(r => r.country));
+    const continents = new Set(visited.map(r => continent(r.country)));
+    const wishlist = resorts.filter(r => !r.visited).length;
+
+    const statsEl = document.getElementById('profile-stats');
+    statsEl.innerHTML = '';
+    [
+      ['Countries skied', countries.size],
+      ['Continents reached', continents.size],
+      ['On wishlist', wishlist],
+      ['Total in catalog', total],
+    ].forEach(([label, value], i) => {
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      row.innerHTML = `<span class="stat-row-label">${label}</span><span class="stat-row-value">${value}</span>`;
+      statsEl.appendChild(row);
+    });
+
+    // Top countries
+    const countryCounts = {};
+    visited.forEach(r => { countryCounts[r.country] = (countryCounts[r.country] || 0) + 1; });
+    const top = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const topEl = document.getElementById('profile-countries');
+    topEl.innerHTML = '';
+    if (top.length === 0) {
+      topEl.innerHTML = '<div class="empty-state">No resorts visited yet.</div>';
+    } else {
+      top.forEach(([country, count]) => {
+        const row = document.createElement('div');
+        row.className = 'stat-row';
+        row.innerHTML = `<span class="stat-row-label">${country}</span><span class="stat-row-value">${count} visited</span>`;
+        topEl.appendChild(row);
+      });
+    }
+  }
+</script>
+</body>
+</html>

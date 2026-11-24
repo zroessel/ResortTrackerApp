@@ -1,0 +1,181 @@
+Alpe dHuez,France,Auvergne-Rhone-Alpes,Famous for its 21 bend road,true
+Alta,USA,Utah,Skiers only resort with legendary snow,true
+Alta Badia,Italy,South Tyrol,Famous for gourmet skiing in the Dolomites,true
+Andermatt,Switzerland,Uri,Deep snow and growing luxury resort,false
+Angel Fire,USA,New Mexico,Family friendly New Mexico resort,false
+Arapahoe Basin,USA,Colorado,High alpine skiing until June,false
+Are,Sweden,Jamtland,Largest ski resort in Scandinavia,false
+Aspen Snowmass,USA,Colorado,Four mountains of world class skiing,false
+Attitash,USA,New Hampshire,Twin peaks resort in North Conway,false
+Avoriaz,France,Auvergne-Rhone-Alpes,Car free resort above Morzine,false
+Banff Sunshine,Canada,Alberta,High alpine resort in Banff National Park,true
+Bansko,Bulgaria,Blagoevgrad,Best known ski resort in the Balkans,false
+Baqueira Beret,Spain,Catalonia,Most popular ski resort in Spain,false
+Bear Mountain,USA,California,Popular Southern California resort,false
+Berchtesgaden,Germany,Bavaria,Small resort near the Austrian border,false
+Big Sky,USA,Montana,One of the largest ski areas in the USA,false
+Big White,Canada,British Columbia,Famous for snow ghosts and powder,false
+Blue Mountain,Canada,Ontario,Largest ski resort in Ontario,false
+Borovets,Bulgaria,Sofia,Oldest ski resort in Bulgaria,false
+Breckenridge,USA,Colorado,Historic mining town turned ski mecca,false
+Brian Head,USA,Utah,Small but high altitude Utah resort,false
+Bridger Bowl,USA,Montana,Non profit community ski area near Bozeman,false
+Brighton,USA,Utah,Popular local hill above Salt Lake City,false
+Bromont,Canada,Quebec,Popular resort with extensive night skiing,false
+Calabogie Peaks,Canada,Ontario,Highest vertical in Ontario,false
+Cannon Mountain,USA,New Hampshire,Historic state run ski area,false
+Castle Mountain,Canada,Alberta,Under the radar gem in southern Alberta,false
+Cervinia,Italy,Aosta Valley,High resort connected to Zermatt,false
+Chamonix,France,Auvergne-Rhone-Alpes,Most famous ski town in the world,false
+Copper Mountain,USA,Colorado,Naturally divided terrain for all levels,false
+Coronet Peak,New Zealand,Otago,Queenstown area resort with stunning views,false
+Cortina dAmpezzo,Italy,Veneto,Queen of the Dolomites and 2026 Olympic host,false
+Courchevel,France,Auvergne-Rhone-Alpes,Glamorous French Alps resort,false
+Courmayeur,Italy,Aosta Valley,Opposite side of Mont Blanc from Chamonix,false
+Crabbe Mountain,Canada,New Brunswick,Popular New Brunswick family resort,false
+Crans Montana,Switzerland,Valais,Sunny plateau resort above the Rhone Valley,false
+Crested Butte,USA,Colorado,Known for extreme terrain and charm,false
+Crystal Mountain,USA,Washington,Largest ski area in Washington state,false
+Cypress Mountain,Canada,British Columbia,Hosted 2010 Olympic freestyle events,false
+Davos,Switzerland,Graubunden,Largest ski resort in Switzerland,false
+Deer Valley,USA,Utah,Luxury resort with impeccable grooming,false
+Engelberg,Switzerland,Obwalden,Titlis glacier and steep freeride terrain,false
+Falls Creek,Australia,Victoria,Remote and scenic Victorian Alps resort,false
+Fernie Alpine Resort,Canada,British Columbia,Known for bowl skiing and heavy snowfall,false
+Flaine,France,Auvergne-Rhone-Alpes,Purpose built resort in Grand Massif,false
+Fortress Mountain,Canada,Alberta,Rugged and uncrowded Kananaskis resort,false
+Furano,Japan,Hokkaido,Uncrowded powder paradise in central Hokkaido,false
+Garmisch Partenkirchen,Germany,Bavaria,Host of 1936 Winter Olympics,false
+Geilo,Norway,Viken,Traditional Norwegian mountain resort,false
+Grindelwald,Switzerland,Bern,Stunning Eiger views and Jungfrau access,false
+Grouse Mountain,Canada,British Columbia,Iconic Vancouver city view from the slopes,false
+Hakuba,Japan,Nagano,Host of 1998 Winter Olympics alpine events,false
+Heavenly,USA,California,Stunning views of Lake Tahoe,false
+Hemsedal,Norway,Viken,Known as the Scandinavian Alps,false
+Hidden Valley,Canada,Ontario,Small Muskoka resort near Huntsville,false
+Horseshoe Resort,Canada,Ontario,Popular weekend getaway from Toronto,false
+Hudson Bay Mountain,Canada,British Columbia,Northern BC resort near Smithers,false
+Innsbruck,Austria,Tyrol,City skiing with Olympic history,false
+Ischgl,Austria,Tyrol,Famous for apres ski and border crossing to Switzerland,false
+Jackson Hole,USA,Wyoming,Iconic American resort with steep terrain,false
+Jasna,Slovakia,Zilina,Largest ski resort in Slovakia,false
+Jay Peak,USA,Vermont,Known for heavy snowfall near Canadian border,false
+June Mountain,USA,California,Small quiet alternative to Mammoth,false
+Kaprun Zell am See,Austria,Salzburg,Glacier and lake resort combination,false
+Keystone,USA,Colorado,Great night skiing and family terrain,false
+Kicking Horse,Canada,British Columbia,Steep terrain and deep powder,false
+Killington,USA,Vermont,Largest ski resort in the eastern USA,false
+Kimberley Alpine Resort,Canada,British Columbia,Sunny and family friendly,false
+Kirkwood,USA,California,Deep snow and steep terrain near Tahoe,false
+Kitzbuhel,Austria,Tyrol,Home of the legendary Hahnenkamm downhill,false
+Kronplatz,Italy,South Tyrol,Modern resort in the heart of South Tyrol,false
+La Plagne,France,Auvergne-Rhone-Alpes,Massive ski area with Olympic bobsled track,false
+Lake Eden,Canada,Alberta,Small community hill near Calgary,false
+Lake Louise,Canada,Alberta,Iconic views of the Canadian Rockies,false
+Le Massif,Canada,Quebec,Highest vertical in eastern North America,false
+Lech Zurs,Austria,Vorarlberg,Exclusive and deep powder resort,false
+Les Arcs,France,Auvergne-Rhone-Alpes,Connected to Peisey Vallandry and La Plagne,false
+Les Deux Alpes,France,Auvergne-Rhone-Alpes,Summer glacier and lively village,false
+Les Menuires,France,Auvergne-Rhone-Alpes,Part of the Three Valleys ski area,false
+Levi,Finland,Lapland,Finlands most popular ski resort,false
+Livigno,Italy,Lombardy,Duty free high altitude resort near Swiss border,false
+Loch Lomond,Canada,Ontario,Small Thunder Bay area ski hill,false
+Loon Mountain,USA,New Hampshire,Popular White Mountains resort,false
+Loveland Ski Area,USA,Colorado,No frills high alpine skiing,false
+Madonna di Campiglio,Italy,Trentino,Glamorous Dolomites resort,false
+Mammoth Mountain,USA,California,Highest ski resort in California,false
+Marble Mountain,Canada,Newfoundland,Largest ski resort in Atlantic Canada,false
+Marmot Basin,Canada,Alberta,Highest skiing in the Canadian Rockies,false
+Mayrhofen,Austria,Tyrol,Popular Zillertal resort with extreme runs,false
+Meribel,France,Auvergne-Rhone-Alpes,Central resort of the Three Valleys,false
+Monarch Mountain,USA,Colorado,Small uncrowded powder stash,false
+Mont Orford,Canada,Quebec,Eastern Townships resort near Magog,false
+Mont Sainte Anne,Canada,Quebec,Major resort near Quebec City,false
+Mont Tremblant,Canada,Quebec,Largest ski resort in eastern Canada,false
+Morzine,France,Auvergne-Rhone-Alpes,Gateway to the Portes du Soleil,false
+Mount Bachelor,USA,Oregon,Massive extinct volcano ski area,false
+Mount Buller,Australia,Victoria,Most visited ski resort in Australia,false
+Mount Hood Meadows,USA,Oregon,Largest ski area on Mount Hood,false
+Mount Hutt,New Zealand,Canterbury,Highest and snowiest resort in New Zealand,false
+Mount Snow,USA,Vermont,Large southern Vermont resort,false
+Mount Washington,Canada,British Columbia,Highest base elevation on Vancouver Island,false
+Mt Norquay,Canada,Alberta,Oldest ski area in the Canadian Rockies,false
+Nakiska,Canada,Alberta,Host of 1988 Calgary Olympics alpine events,false
+Niseko,Japan,Hokkaido,World famous for ultra light powder snow,false
+Northstar,USA,California,Polished family resort at Lake Tahoe,false
+Nozawa Onsen,Japan,Nagano,Traditional onsen town with great skiing,false
+Oberstdorf,Germany,Bavaria,Germanys southernmost resort and ski jumping venue,false
+Obertauern,Austria,Salzburg,Guaranteed snow in a high alpine bowl,false
+Okemo,USA,Vermont,Known for excellent grooming,false
+Palisades Tahoe,USA,California,Host of 1960 Winter Olympics,false
+Panorama Mountain Resort,Canada,British Columbia,Deep in the Purcell Mountains,false
+Park City,USA,Utah,Largest ski resort in the USA,false
+Perisher,Australia,New South Wales,Largest ski resort in the Southern Hemisphere,false
+Poley Mountain,Canada,New Brunswick,Largest ski area in New Brunswick,false
+Powder King,Canada,British Columbia,Remote resort with massive snowfall,false
+Powder Mountain,USA,Utah,Largest ski area acreage in the USA,false
+Purgatory Resort,USA,Colorado,Laid back Durango area resort,false
+Rabbit Hill,Canada,Alberta,Night skiing hill near Edmonton,false
+Red Mountain,Canada,British Columbia,Uncrowded and rugged backcountry feel,false
+Revelstoke Mountain Resort,Canada,British Columbia,Longest vertical drop in North America,false
+Ruka,Finland,Kainuu,Lapland resort with reliable snow,false
+Rusutsu,Japan,Hokkaido,Large uncrowded resort near Niseko,false
+Saas Fee,Switzerland,Valais,Glacier resort with car free village,false
+Sasquatch Mountain,Canada,British Columbia,Small family resort east of Vancouver,false
+Schladming,Austria,Styria,Night skiing capital and World Cup venue,false
+Schweitzer,USA,Idaho,Hidden gem with great views of Lake Pend Oreille,false
+Searchmont Resort,Canada,Ontario,Northern Ontario hidden gem,false
+Selva Val Gardena,Italy,South Tyrol,Central hub of the Sella Ronda circuit,false
+Serre Chevalier,France,Provence-Alpes-Cote dAzur,Charming villages and sunny slopes,false
+Sestriere,Italy,Piedmont,Host of 2006 Winter Olympics alpine events,false
+Seymour Mountain,Canada,British Columbia,Local hill overlooking Vancouver,false
+Shames Mountain,Canada,British Columbia,Tiny hidden gem near Terrace BC,false
+Sierra Nevada,Spain,Andalusia,Southernmost ski resort in Europe,false
+Silver Star,Canada,British Columbia,Charming resort village with groomed runs,false
+Ski Martock,Canada,Nova Scotia,Small family resort in Windsor NS,false
+Ski Saint Bruno,Canada,Quebec,Small hill serving Montreal area,false
+Ski Santa Fe,USA,New Mexico,High altitude desert skiing near Santa Fe,false
+Ski Wentworth,Canada,Nova Scotia,Small Nova Scotia resort,false
+Smugglers Notch,USA,Vermont,Family focused Vermont resort,false
+Snow Summit,USA,California,Twin resort to Bear Mountain,false
+Snowbasin,USA,Utah,Host of 2002 Olympic downhill events,false
+Snowbird,USA,Utah,Deep powder and long season,false
+Snowshoe Mountain,USA,West Virginia,Largest ski area in the mid Atlantic,false
+Solden,Austria,Tyrol,High glacier resort and James Bond filming location,false
+Solitude,USA,Utah,Uncrowded and serene Big Cottonwood resort,false
+St Anton,Austria,Tyrol,Birthplace of alpine skiing,false
+St Moritz,Switzerland,Graubunden,Glamorous resort that invented winter tourism,false
+Steamboat,USA,Colorado,Famous for champagne powder,false
+Stevens Pass,USA,Washington,Popular Seattle area resort,false
+Stoneham,Canada,Quebec,Family resort near Quebec City,false
+Stowe,USA,Vermont,Classic New England ski town,false
+Stratton,USA,Vermont,Upscale Vermont resort birthplace of snowboarding,false
+Sugar Bowl,USA,California,Historic Tahoe resort since 1939,false
+Sugarbush,USA,Vermont,Two mountains connected by gondola,false
+Sugarloaf,USA,Maine,Second highest peak in Maine,false
+Sun Peaks,Canada,British Columbia,Third largest ski area in Canada,false
+Sun Valley,USA,Idaho,Americas first destination ski resort,false
+Sunday River,USA,Maine,Eight peaks of New England skiing,false
+Sunridge Ski Area,Canada,Alberta,Small family hill in Calgary,false
+Taos Ski Valley,USA,New Mexico,Legendary steep and deep New Mexico resort,false
+Telluride,USA,Colorado,Remote and stunning box canyon setting,false
+The Remarkables,New Zealand,Otago,Iconic jagged peaks above Queenstown,false
+Thredbo,Australia,New South Wales,Australias longest runs and steep terrain,false
+Tignes,France,Auvergne-Rhone-Alpes,Glacier skiing and modern resort,false
+Timberline Lodge,USA,Oregon,Year round skiing on Mount Hood glacier,false
+Treble Cone,New Zealand,Otago,Wanaka resort with long runs and views,false
+Trysil,Norway,Innlandet,Norways largest ski resort,false
+Vail,USA,Colorado,One of the most famous resorts in the world,false
+Val Gardena,Italy,South Tyrol,Stunning Dolomites scenery and Sella Ronda,false
+Val Thorens,France,Auvergne-Rhone-Alpes,Highest ski resort in Europe,false
+Val dIsere,France,Auvergne-Rhone-Alpes,World Cup racing and steep terrain,false
+Verbier,Switzerland,Valais,World class freeride and apres ski,false
+Wengen,Switzerland,Bern,Car free village with Lauberhorn race course,false
+Whistler Blackcomb,Canada,British Columbia,Largest ski resort in North America,false
+White Pass,USA,Washington,Small resort near Mount Rainier,false
+Whitefish Mountain Resort,USA,Montana,Charming small town resort in Glacier country,false
+Whitewater Ski Resort,Canada,British Columbia,Small but legendary powder resort,false
+Winter Park,USA,Colorado,One of Colorados oldest ski areas,false
+Zakopane,Poland,Lesser Poland,Historic resort at the foot of the Tatras,false
+Zermatt,Switzerland,Valais,Skiing under the Matterhorn year round,false
+Zugspitze,Germany,Bavaria,Skiing on Germanys highest peak,false
