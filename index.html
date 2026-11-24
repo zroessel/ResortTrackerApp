@@ -250,7 +250,7 @@
   .list-title { font-size: 13px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: 0.6px; }
   #result-count { font-size: 12px; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
   .sort-control { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
-  #sort-select {
+  .select {
     appearance: none; -webkit-appearance: none;
     background: var(--s1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235a7a92' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
     border: 1px solid var(--rim); border-radius: 8px;
@@ -258,8 +258,9 @@
     padding: 5px 28px 5px 10px; cursor: pointer; outline: none;
     transition: border-color 0.12s;
   }
-  #sort-select:hover, #sort-select:focus { border-color: var(--ice-dim); }
-  #sort-select option { background: var(--s2); color: var(--snow); }
+  .select:hover:not(:disabled), .select:focus { border-color: var(--ice-dim); }
+  .select:disabled { opacity: 0.5; cursor: default; }
+  .select option { background: var(--s2); color: var(--snow); }
 
   #resort-list { padding: 0 0 20px; }
 
@@ -309,6 +310,11 @@
   }
   .toggle-btn:hover { border-color: var(--ice-dim); color: var(--ice); }
   .toggle-btn.visited { border-color: var(--green); color: var(--green); }
+  #place-row { display: flex; gap: 8px; }
+  #place-row .select { flex: 1; min-width: 0; background-color: var(--s2); font-size: 13px; padding-top: 7px; padding-bottom: 7px; text-overflow: ellipsis; }
+  .resort-facts { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .credit { padding: 20px; font-size: 11px; color: var(--muted); text-align: center; }
+  .credit a { color: var(--soft); }
   .star-btn {
     background: none; border: none; cursor: pointer; flex-shrink: 0;
     color: var(--muted); font-size: 18px; line-height: 1;
@@ -444,16 +450,20 @@
           <button class="chip" id="chip-wishlist">★ Wishlist</button>
           <button class="chip" id="chip-clear">Clear</button>
         </div>
-        <div id="country-row"></div>
+        <div id="place-row">
+          <select id="country-select" class="select" aria-label="Country"></select>
+          <select id="region-select" class="select" aria-label="Province or state" disabled></select>
+        </div>
       </div>
       <div id="list-header">
         <span class="list-title">All Resorts <span id="result-count"></span></span>
         <label class="sort-control">
           <span>Sort by</span>
-          <select id="sort-select" aria-label="Sort resorts"></select>
+          <select id="sort-select" class="select" aria-label="Sort resorts"></select>
         </label>
       </div>
       <div id="resort-list"></div>
+
     </div>
 
     <!-- Map -->
@@ -490,6 +500,7 @@
       <div id="profile-stats"></div>
       <div class="section-header" style="margin-top:16px">Top Countries</div>
       <div id="profile-countries"></div>
+      <div class="credit">Resort data © <a href="https://openskimap.org" target="_blank" rel="noopener">OpenSkiMap</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL)</div>
     </div>
 
   </div>
@@ -511,34 +522,25 @@
 </div>
 
 <script>
-  // ── Browser fallback ──────────────────────────────────────────────────────
-  // In Electron, preload.js exposes window.api backed by resorts.txt on disk.
-  // In a plain browser (e.g. GitHub Pages), load the same file over HTTP and
-  // persist visited state in localStorage instead.
+  // ── Data layer ────────────────────────────────────────────────────────────
+  // The UI only talks to window.api. In Electron, preload.js provides it (files
+  // on disk via IPC). In a plain browser (e.g. GitHub Pages) this fallback loads
+  // the catalog over HTTP and keeps your progress in localStorage.
   if (!window.api) {
-    const STORE_KEY = 'powder.resorts.v1';
-    const parse = text => text.split('\n')
-      .map(l => l.trim()).filter(Boolean)
-      .map(l => {
-        const p = l.split(',');
-        if (p.length < 5) return null;
-        return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(),
-                 description: p[3].trim(), visited: p[4].trim() === 'true',
-                 wishlist: (p[5] || '').trim() === 'true' };
-      })
-      .filter(Boolean);
-
+    const PROGRESS_KEY = 'powder.progress.v2';
     window.api = {
-      async loadResorts() {
+      async loadCatalog() {
+        return (await fetch('data/resorts.json')).json();
+      },
+      async loadProgress() {
         try {
-          const saved = localStorage.getItem(STORE_KEY);
+          const saved = localStorage.getItem(PROGRESS_KEY);
           if (saved) return JSON.parse(saved);
         } catch (_) { /* storage unavailable */ }
-        const res = await fetch('resorts.txt');
-        return parse(await res.text());
+        return (await fetch('data/progress.default.json')).json();
       },
-      async saveResorts(list) {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (_) {}
+      async saveProgress(progress) {
+        try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (_) {}
       },
     };
     document.documentElement.classList.add('web');
@@ -547,34 +549,62 @@
   let resorts = [];
   let searchQuery = '';
   let selectedCountry = 'All';
+  let selectedRegion = 'All';
   let visitedOnly = false;
   let wishlistOnly = false;
-  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first 3=unvisited first 4=country
-  const sortLabels = ['Name (A → Z)', 'Name (Z → A)', 'Visited first', 'Unvisited first', 'Country'];
+  let sortMode = 0;
+  // Compare names ignoring leading quotes/punctuation; Latin names sort before other scripts
+  const collator = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
+  const byName = (a, b) => collator.compare(a._sort, b._sort);
+  const SORTS = [
+    ['Name (A → Z)',    byName],
+    ['Name (Z → A)',    (a, b) => byName(b, a)],
+    ['Biggest first',   (a, b) => (b.lifts || 0) - (a.lifts || 0) || (b.runKm || 0) - (a.runKm || 0) || byName(a, b)],
+    ['Visited first',   (a, b) => (b.visited - a.visited) || byName(a, b)],
+    ['Unvisited first', (a, b) => (a.visited - b.visited) || byName(a, b)],
+    ['Country',         (a, b) => (isHome(b.country) - isHome(a.country)) || a.country.localeCompare(b.country) || byName(a, b)],
+  ];
+  const CONTINENT_ORDER = ['North America', 'South America', 'Europe', 'Asia', 'Oceania', 'Africa', 'Antarctica', 'Other'];
+  const PAGE_SIZE = 60;
 
   // User settings (home country) live in localStorage in both Electron and the browser
   const SETTINGS_KEY = 'powder.settings.v1';
   let settings = { homeCountry: '' };
   try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; } catch (_) {}
+  if (settings.homeCountry === 'USA') settings.homeCountry = 'United States'; // older saved value
   function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {} }
   const isHome = c => !!settings.homeCountry && c.toLowerCase() === settings.homeCountry.toLowerCase();
 
-  const CONTINENTS = {
-    'Canada': 'North America', 'USA': 'North America',
-    'France': 'Europe', 'Switzerland': 'Europe', 'Austria': 'Europe',
-    'Italy': 'Europe', 'Germany': 'Europe', 'Sweden': 'Europe',
-    'Norway': 'Europe', 'Finland': 'Europe', 'Bulgaria': 'Europe',
-    'Slovakia': 'Europe', 'Poland': 'Europe', 'Spain': 'Europe',
-    'Japan': 'Asia',
-    'Australia': 'Oceania', 'New Zealand': 'Oceania',
-  };
-  const continent = c => CONTINENTS[c] || 'Other';
+  // Resort names come from OpenStreetMap, so never inject them as raw HTML
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => n.toLocaleString();
+  const countriesOf = r => r.countries || [r.country];
+
+  function saveProgress() {
+    window.api.saveProgress({
+      visited: resorts.filter(r => r.visited).map(r => r.id),
+      wishlist: resorts.filter(r => r.wishlist && !r.visited).map(r => r.id),
+    });
+  }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
 
   window.addEventListener('DOMContentLoaded', async () => {
-    resorts = await window.api.loadResorts();
-    buildCountryChips();
+    const [catalog, progress] = await Promise.all([window.api.loadCatalog(), window.api.loadProgress()]);
+    const visited = new Set(progress.visited || []);
+    const wishlist = new Set(progress.wishlist || []);
+    resorts = catalog.map(r => {
+      const region = r.regions.join(' / ') || '—';
+      return {
+        ...r, region,
+        visited: visited.has(r.id),
+        wishlist: wishlist.has(r.id),
+        _sort: r.name.replace(/^[^\p{L}\p{N}]+/u, ''),
+        _hay: [r.name, ...(r.aka || []), ...countriesOf(r), region, r.description || ''].join(' ').toLowerCase(),
+      };
+    });
+    buildCountrySelect();
+    buildRegionSelect();
     buildMapPage();
     buildProfilePage();
     render();
@@ -593,23 +623,24 @@
 
     const homeInput = document.getElementById('home-input');
     document.getElementById('home-options').innerHTML =
-      [...new Set(resorts.map(r => r.country))].sort().map(c => `<option value="${c}">`).join('');
+      allCountries().map(c => `<option value="${esc(c)}">`).join('');
     homeInput.value = settings.homeCountry;
     homeInput.addEventListener('change', () => {
       const typed = homeInput.value.trim();
-      // Snap to the catalog's spelling when it matches (e.g. "usa" → "USA")
-      const match = resorts.find(r => r.country.toLowerCase() === typed.toLowerCase());
-      settings.homeCountry = match ? match.country : typed;
+      // Snap to the catalog's spelling when it matches (e.g. "canada" → "Canada")
+      const match = allCountries().find(c => c.toLowerCase() === typed.toLowerCase());
+      settings.homeCountry = match || typed;
       homeInput.value = settings.homeCountry;
       saveSettings();
-      buildCountryChips();
+      buildCountrySelect();
       buildProfilePage();
       render();
     });
 
+    let searchTimer;
     document.getElementById('search').addEventListener('input', e => {
-      searchQuery = e.target.value.toLowerCase();
-      render();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { searchQuery = e.target.value.trim().toLowerCase(); render(); }, 120);
     });
 
     document.getElementById('chip-visited').addEventListener('click', () => {
@@ -624,8 +655,20 @@
       render();
     });
 
+    document.getElementById('country-select').addEventListener('change', e => {
+      selectedCountry = e.target.value;
+      selectedRegion = 'All';
+      buildRegionSelect();
+      render();
+    });
+
+    document.getElementById('region-select').addEventListener('change', e => {
+      selectedRegion = e.target.value;
+      render();
+    });
+
     const sortSelect = document.getElementById('sort-select');
-    sortSelect.innerHTML = sortLabels.map((l, i) => `<option value="${i}">${l}</option>`).join('');
+    sortSelect.innerHTML = SORTS.map(([l], i) => `<option value="${i}">${l}</option>`).join('');
     sortSelect.addEventListener('change', () => {
       sortMode = Number(sortSelect.value);
       render();
@@ -634,14 +677,16 @@
     document.getElementById('chip-clear').addEventListener('click', () => {
       searchQuery = '';
       selectedCountry = 'All';
+      selectedRegion = 'All';
       visitedOnly = false;
       wishlistOnly = false;
-      document.getElementById('chip-wishlist').classList.remove('active');
       sortMode = 0;
       document.getElementById('search').value = '';
       document.getElementById('chip-visited').classList.remove('active');
+      document.getElementById('chip-wishlist').classList.remove('active');
       document.getElementById('sort-select').value = '0';
-      buildCountryChips();
+      buildCountrySelect();
+      buildRegionSelect();
       render();
     });
 
@@ -656,25 +701,83 @@
         if (btn.dataset.tab === 'map') buildMapPage();
       });
     });
+
+    // Infinite scroll: append the next batch when you get near the bottom
+    const page = document.getElementById('page-resorts');
+    page.addEventListener('scroll', () => {
+      if (page.scrollTop + page.clientHeight > page.scrollHeight - 600) renderMore();
+    }, { passive: true });
+  }
+
+  // ── Country / province selects ────────────────────────────────────────────
+
+  function allCountries() {
+    return [...new Set(resorts.flatMap(countriesOf))].sort();
+  }
+
+  function buildCountrySelect() {
+    const counts = {};
+    resorts.forEach(r => countriesOf(r).forEach(c => { counts[c] = (counts[c] || 0) + 1; }));
+    const all = Object.keys(counts).sort();
+    const ordered = [...all.filter(isHome), ...all.filter(c => !isHome(c))];
+    const sel = document.getElementById('country-select');
+    sel.innerHTML = `<option value="All">All countries</option>` + ordered.map(c =>
+      `<option value="${esc(c)}">${isHome(c) ? '⌂ ' : ''}${esc(c)} (${fmt(counts[c])})</option>`).join('');
+    sel.value = selectedCountry;
+  }
+
+  function buildRegionSelect() {
+    const sel = document.getElementById('region-select');
+    if (selectedCountry === 'All') {
+      sel.innerHTML = `<option value="All">All provinces / states</option>`;
+      sel.disabled = true;
+      return;
+    }
+    const counts = {};
+    resorts.filter(r => countriesOf(r).includes(selectedCountry))
+      .forEach(r => r.regions.forEach(g => { counts[g] = (counts[g] || 0) + 1; }));
+    sel.innerHTML = `<option value="All">All provinces / states</option>` + Object.keys(counts).sort().map(g =>
+      `<option value="${esc(g)}">${esc(g)} (${fmt(counts[g])})</option>`).join('');
+    sel.disabled = false;
+    sel.value = selectedRegion;
   }
 
   // ── Resorts render ────────────────────────────────────────────────────────
 
+  let currentList = [];
+  let shown = 0;
+
   function render() {
     updateStats();
-
-    const filtered = filteredResorts();
-    document.getElementById('result-count').textContent = filtered.length;
+    currentList = filteredResorts();
+    document.getElementById('result-count').textContent = fmt(currentList.length);
 
     const list = document.getElementById('resort-list');
     list.innerHTML = '';
-
-    if (filtered.length === 0) {
+    shown = 0;
+    if (currentList.length === 0) {
       list.innerHTML = '<div class="empty-state">No resorts match these filters.</div>';
       return;
     }
+    renderMore();
+  }
 
-    filtered.forEach(r => list.appendChild(makeRow(r)));
+  function renderMore() {
+    if (shown >= currentList.length) return;
+    const frag = document.createDocumentFragment();
+    currentList.slice(shown, shown + PAGE_SIZE).forEach(r => frag.appendChild(makeRow(r)));
+    shown = Math.min(shown + PAGE_SIZE, currentList.length);
+    document.getElementById('resort-list').appendChild(frag);
+  }
+
+  // Re-render only the rows already on screen (keeps scroll position)
+  function refreshRows() {
+    updateStats();
+    const list = document.getElementById('resort-list');
+    list.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    currentList.slice(0, shown).forEach(r => frag.appendChild(makeRow(r)));
+    list.appendChild(frag);
   }
 
   function makeRow(resort) {
@@ -684,20 +787,27 @@
     const dot = document.createElement('div');
     dot.className = 'resort-dot' + (resort.visited ? ' visited' : '');
 
+    const facts = [
+      resort.lifts ? `${resort.lifts} lift${resort.lifts === 1 ? '' : 's'}` : '',
+      resort.vertical ? `${fmt(resort.vertical)} m vert` : '',
+    ].filter(Boolean).join(' · ');
+
     const info = document.createElement('div');
     info.className = 'resort-info';
-    info.innerHTML = `<div class="resort-name">${resort.name}</div><div class="resort-meta">${resort.country} · ${resort.region}</div>`;
+    info.innerHTML =
+      `<div class="resort-name">${esc(resort.name)}</div>` +
+      `<div class="resort-meta">${esc(resort.country)} · ${esc(resort.region)}</div>` +
+      (facts ? `<div class="resort-facts">${facts}</div>` : '');
 
     const btn = document.createElement('button');
     btn.className = 'toggle-btn' + (resort.visited ? ' visited' : '');
     btn.textContent = resort.visited ? '✓' : '+';
+    btn.title = resort.visited ? 'Mark as not visited' : 'Mark as visited';
     btn.addEventListener('click', () => {
       resort.visited = !resort.visited;
       if (resort.visited) resort.wishlist = false; // skied it — off the wishlist
-      window.api.saveResorts(resorts);
-      render();
-      buildProfilePage();
-      buildMapPage();
+      saveProgress();
+      refreshRows();
     });
 
     const star = document.createElement('button');
@@ -707,9 +817,8 @@
     star.hidden = resort.visited;
     star.addEventListener('click', () => {
       resort.wishlist = !resort.wishlist;
-      window.api.saveResorts(resorts);
-      render();
-      buildProfilePage();
+      saveProgress();
+      refreshRows();
     });
 
     row.append(dot, info, star, btn);
@@ -717,85 +826,64 @@
   }
 
   function filteredResorts() {
-    let list = resorts.filter(r => {
-      if (selectedCountry !== 'All' && r.country !== selectedCountry) return false;
+    const terms = searchQuery.split(/\s+/).filter(Boolean);
+    const list = resorts.filter(r => {
+      if (selectedCountry !== 'All' && !countriesOf(r).includes(selectedCountry)) return false;
+      if (selectedRegion !== 'All' && !r.regions.includes(selectedRegion)) return false;
       if (visitedOnly && !r.visited) return false;
       if (wishlistOnly && !r.wishlist) return false;
-      if (searchQuery) {
-        const hay = (r.name + r.country + r.region + r.description).toLowerCase();
-        if (!hay.includes(searchQuery)) return false;
-      }
+      if (terms.length && !terms.every(t => r._hay.includes(t))) return false;
       return true;
     });
-
-    if (sortMode === 0) list.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sortMode === 1) list.sort((a, b) => b.name.localeCompare(a.name));
-    else if (sortMode === 2) list.sort((a, b) => (b.visited - a.visited) || a.name.localeCompare(b.name));
-    else if (sortMode === 3) list.sort((a, b) => (a.visited - b.visited) || a.name.localeCompare(b.name));
-    else list.sort((a, b) => (isHome(b.country) - isHome(a.country)) || a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
-
-    return list;
+    return list.sort(SORTS[sortMode][1]);
   }
 
   function updateStats() {
     const visited = resorts.filter(r => r.visited);
-    const countries = new Set(visited.map(r => r.country));
-    const continents = new Set(visited.map(r => continent(r.country)));
     document.getElementById('stat-visited').textContent = visited.length;
-    document.getElementById('stat-countries').textContent = countries.size;
-    document.getElementById('stat-continents').textContent = continents.size;
-  }
-
-  function buildCountryChips() {
-    const row = document.getElementById('country-row');
-    row.innerHTML = '';
-    const all = [...new Set(resorts.map(r => r.country))].sort();
-    const home = all.filter(isHome);
-    const countries = ['All', ...home, ...all.filter(c => !isHome(c))];
-    countries.forEach(c => {
-      const chip = document.createElement('button');
-      chip.className = 'chip' + (c === selectedCountry ? ' active' : '');
-      chip.textContent = isHome(c) ? '⌂ ' + c : c;
-      chip.addEventListener('click', () => {
-        selectedCountry = c;
-        buildCountryChips();
-        render();
-      });
-      row.appendChild(chip);
-    });
+    document.getElementById('stat-countries').textContent = new Set(visited.map(r => r.country)).size;
+    document.getElementById('stat-continents').textContent = new Set(visited.map(r => r.continent)).size;
   }
 
   // ── Map page ──────────────────────────────────────────────────────────────
 
+  function tally(keyFn) {
+    const t = {};
+    resorts.forEach(r => {
+      const k = keyFn(r);
+      t[k] = t[k] || { total: 0, visited: 0 };
+      t[k].total++;
+      if (r.visited) t[k].visited++;
+    });
+    return t;
+  }
+
   function buildMapPage() {
-    const continentNames = ['North America', 'Europe', 'Asia', 'Oceania', 'Other'];
+    const byContinent = tally(r => r.continent);
     const cl = document.getElementById('continent-list');
     cl.innerHTML = '';
-    continentNames.forEach(name => {
-      const total = resorts.filter(r => continent(r.country) === name).length;
-      const visited = resorts.filter(r => continent(r.country) === name && r.visited).length;
-      const pct = total ? (visited / total * 100) : 0;
-
+    CONTINENT_ORDER.filter(name => byContinent[name]).forEach(name => {
+      const { total, visited } = byContinent[name];
+      const pct = total ? Math.max(visited ? 2 : 0, visited / total * 100) : 0;
       const row = document.createElement('div');
       row.className = 'continent-row';
       row.innerHTML = `
         <span class="continent-name">${name}</span>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-        <span class="continent-count">${visited}/${total}</span>`;
+        <span class="continent-count">${visited}/${fmt(total)}</span>`;
       cl.appendChild(row);
     });
 
-    const countryNames = [...new Set(resorts.map(r => r.country))].sort();
+    const byCountry = tally(r => r.country);
     const clist = document.getElementById('country-list');
     clist.innerHTML = '';
-    countryNames.forEach(c => {
-      const total = resorts.filter(r => r.country === c).length;
-      const visited = resorts.filter(r => r.country === c && r.visited).length;
+    Object.keys(byCountry).sort().forEach(c => {
+      const { total, visited } = byCountry[c];
       const row = document.createElement('div');
       row.className = 'country-row';
       row.innerHTML = `
-        <span class="country-name">${c}</span>
-        <span class="country-count ${visited > 0 ? 'has-visited' : ''}">${visited} / ${total}</span>`;
+        <span class="country-name">${esc(c)}</span>
+        <span class="country-count ${visited > 0 ? 'has-visited' : ''}">${visited} / ${fmt(total)}</span>`;
       clist.appendChild(row);
     });
   }
@@ -808,52 +896,36 @@
     const pct = total ? (visited.length / total * 100) : 0;
 
     document.getElementById('profile-big-num').textContent = visited.length;
-    document.getElementById('profile-sub').textContent = `of ${total} resorts visited · ${Math.round(pct)}%`;
-    document.getElementById('profile-bar-fill').style.width = pct + '%';
+    document.getElementById('profile-sub').textContent =
+      `of ${fmt(total)} resorts visited · ${pct < 1 && pct > 0 ? pct.toFixed(1) : Math.round(pct)}%`;
+    document.getElementById('profile-bar-fill').style.width = Math.max(visited.length ? 1 : 0, pct) + '%';
 
     const countries = new Set(visited.map(r => r.country));
-    const continents = new Set(visited.map(r => continent(r.country)));
+    const continents = new Set(visited.map(r => r.continent));
     const wishlist = resorts.filter(r => r.wishlist && !r.visited).length;
 
+    const rows = [];
+    if (settings.homeCountry) {
+      const homeAll = resorts.filter(r => countriesOf(r).some(isHome));
+      const homeVisited = homeAll.filter(r => r.visited).length;
+      rows.push([`Home resorts (${settings.homeCountry})`, homeAll.length ? `${homeVisited} / ${fmt(homeAll.length)}` : '—']);
+      rows.push(['Resorts abroad', visited.length - homeVisited]);
+    }
+    rows.push(['Countries skied', countries.size], ['Continents reached', continents.size],
+              ['On wishlist', wishlist], ['Total in catalog', fmt(total)]);
+
     const statsEl = document.getElementById('profile-stats');
-    statsEl.innerHTML = '';
-    [
-      ...(settings.homeCountry ? (() => {
-        const homeAll = resorts.filter(r => isHome(r.country));
-        const homeVisited = homeAll.filter(r => r.visited).length;
-        return [
-          [`Home resorts (${settings.homeCountry})`, homeAll.length ? `${homeVisited} / ${homeAll.length}` : '—'],
-          ['Resorts abroad', visited.length - homeVisited],
-        ];
-      })() : []),
-      ['Countries skied', countries.size],
-      ['Continents reached', continents.size],
-      ['On wishlist', wishlist],
-      ['Total in catalog', total],
-    ].forEach(([label, value], i) => {
-      const row = document.createElement('div');
-      row.className = 'stat-row';
-      row.innerHTML = `<span class="stat-row-label">${label}</span><span class="stat-row-value">${value}</span>`;
-      statsEl.appendChild(row);
-    });
+    statsEl.innerHTML = rows.map(([label, value]) =>
+      `<div class="stat-row"><span class="stat-row-label">${esc(label)}</span><span class="stat-row-value">${value}</span></div>`).join('');
 
     // Top countries
     const countryCounts = {};
     visited.forEach(r => { countryCounts[r.country] = (countryCounts[r.country] || 0) + 1; });
     const top = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-    const topEl = document.getElementById('profile-countries');
-    topEl.innerHTML = '';
-    if (top.length === 0) {
-      topEl.innerHTML = '<div class="empty-state">No resorts visited yet.</div>';
-    } else {
-      top.forEach(([country, count]) => {
-        const row = document.createElement('div');
-        row.className = 'stat-row';
-        row.innerHTML = `<span class="stat-row-label">${country}</span><span class="stat-row-value">${count} visited</span>`;
-        topEl.appendChild(row);
-      });
-    }
+    document.getElementById('profile-countries').innerHTML = top.length === 0
+      ? '<div class="empty-state">No resorts visited yet.</div>'
+      : top.map(([country, count]) =>
+          `<div class="stat-row"><span class="stat-row-label">${esc(country)}</span><span class="stat-row-value">${count} visited</span></div>`).join('');
   }
 </script>
 </body>

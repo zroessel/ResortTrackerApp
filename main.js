@@ -2,8 +2,6 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
-const RESORTS_FILE = path.join(__dirname, 'resorts.txt');
-
 function createWindow() {
   const win = new BrowserWindow({
     width: 390,
@@ -25,20 +23,22 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-ipcMain.handle('load-resorts', () => {
-  const text = fs.readFileSync(RESORTS_FILE, 'utf8');
-  return text.split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0)
-    .map(l => {
-      const p = l.split(',');
-      if (p.length < 5) return null;
-      return { name: p[0].trim(), country: p[1].trim(), region: p[2].trim(), description: p[3].trim(), visited: p[4].trim() === 'true', wishlist: (p[5] || '').trim() === 'true' };
-    })
-    .filter(Boolean);
+// Resort catalog ships with the app; your progress lives in the per-user data folder
+const CATALOG_FILE = path.join(__dirname, 'data', 'resorts.json');
+const DEFAULT_PROGRESS_FILE = path.join(__dirname, 'data', 'progress.default.json');
+const progressFile = () => path.join(app.getPath('userData'), 'progress.json');
+
+ipcMain.handle('load-catalog', () => JSON.parse(fs.readFileSync(CATALOG_FILE, 'utf8')));
+
+ipcMain.handle('load-progress', () => {
+  const file = fs.existsSync(progressFile()) ? progressFile() : DEFAULT_PROGRESS_FILE;
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
 });
 
-ipcMain.handle('save-resorts', (_e, resorts) => {
-  const lines = resorts.map(r => [r.name, r.country, r.region, r.description, r.visited, !!r.wishlist].join(','));
-  fs.writeFileSync(RESORTS_FILE, lines.join('\n'), 'utf8');
+ipcMain.handle('save-progress', (_e, progress) => {
+  const clean = {
+    visited: (progress.visited || []).filter(id => typeof id === 'string'),
+    wishlist: (progress.wishlist || []).filter(id => typeof id === 'string'),
+  };
+  fs.writeFileSync(progressFile(), JSON.stringify(clean, null, 2), 'utf8');
 });

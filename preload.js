@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-  loadResorts: () => ipcRenderer.invoke('load-resorts'),
-  saveResorts: (resorts) => ipcRenderer.invoke('save-resorts', resorts),
+  loadCatalog: () => ipcRenderer.invoke('load-catalog'),
+  loadProgress: () => ipcRenderer.invoke('load-progress'),
+  saveProgress: (progress) => ipcRenderer.invoke('save-progress', progress),
 });

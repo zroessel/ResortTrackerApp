@@ -4,3 +4,4 @@ bin/
 .claude/settings.local.json
 .DS_Store
 Thumbs.db
+data/raw/
