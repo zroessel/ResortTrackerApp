@@ -118,15 +118,17 @@
   /* ── Stats strip ── */
   #stats-strip {
     display: flex;
+    margin: 4px 16px 0;
     background: var(--s1);
-    border-bottom: 1px solid var(--rim);
+    border: 1px solid var(--rim);
+    border-radius: var(--r);
   }
   .stat-cell {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 14px 0;
+    padding: 12px 0;
     gap: 3px;
   }
   .stat-cell + .stat-cell { border-left: 1px solid var(--rim); }
@@ -399,7 +401,7 @@
       <div id="controls">
         <input id="search" type="text" placeholder="Search resorts, countries, regions…">
         <div id="filter-row">
-          <button class="chip" id="chip-visited">Visited only</button>
+          <button class="chip" id="chip-visited">Visited</button>
           <button class="chip" id="chip-wishlist">★ Wishlist</button>
           <button class="chip" id="chip-clear">Clear</button>
         </div>
