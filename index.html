@@ -113,7 +113,7 @@
   }
   .page-title span { color: var(--ice); font-weight: 300; }
   .page-header { display: flex; align-items: center; gap: 10px; }
-  .logo { width: 30px; height: 22px; flex-shrink: 0; fill: var(--snow); }
+  .logo { width: 30px; height: 22px; flex-shrink: 0; fill: var(--snow); stroke: var(--snow); stroke-width: 3; stroke-linejoin: round; }
 
   /* ── Stats strip ── */
   #stats-strip {
@@ -208,7 +208,18 @@
     padding: 14px 16px 6px;
   }
   .list-title { font-size: 13px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: 0.6px; }
-  #result-count { font-size: 12px; color: var(--muted); }
+  #result-count { font-size: 12px; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+  .sort-control { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  #sort-select {
+    appearance: none; -webkit-appearance: none;
+    background: var(--s1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235a7a92' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid var(--rim); border-radius: 8px;
+    color: var(--snow); font-family: inherit; font-size: 12px;
+    padding: 5px 28px 5px 10px; cursor: pointer; outline: none;
+    transition: border-color 0.12s;
+  }
+  #sort-select:hover, #sort-select:focus { border-color: var(--ice-dim); }
+  #sort-select option { background: var(--s2); color: var(--snow); }
 
   #resort-list { padding: 0 0 20px; }
 
@@ -377,7 +388,7 @@
     <!-- Resorts -->
     <div class="page active" id="page-resorts">
       <div class="page-header">
-        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20.5 L10 6 L15 13 L20 2.5 L28 20.5 Z"/></svg>
         <div class="page-title">My <span>Resorts</span></div>
       </div>
       <div id="stats-strip">
@@ -390,14 +401,16 @@
         <div id="filter-row">
           <button class="chip" id="chip-visited">Visited only</button>
           <button class="chip" id="chip-wishlist">★ Wishlist</button>
-          <button class="chip" id="chip-sort">A → Z</button>
           <button class="chip" id="chip-clear">Clear</button>
         </div>
         <div id="country-row"></div>
       </div>
       <div id="list-header">
-        <span class="list-title">All Resorts</span>
-        <span id="result-count"></span>
+        <span class="list-title">All Resorts <span id="result-count"></span></span>
+        <label class="sort-control">
+          <span>Sort by</span>
+          <select id="sort-select" aria-label="Sort resorts"></select>
+        </label>
       </div>
       <div id="resort-list"></div>
     </div>
@@ -405,7 +418,7 @@
     <!-- Map -->
     <div class="page" id="page-map">
       <div class="page-header">
-        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20.5 L10 6 L15 13 L20 2.5 L28 20.5 Z"/></svg>
         <div class="page-title">World <span>Map</span></div>
       </div>
       <div class="section-header">By Continent</div>
@@ -417,7 +430,7 @@
     <!-- Profile -->
     <div class="page" id="page-profile">
       <div class="page-header">
-        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M0 22 L10 4 L15 12 L20 0 L30 22 Z"/></svg>
+        <svg class="logo" viewBox="0 0 30 22" aria-hidden="true"><path d="M2 20.5 L10 6 L15 13 L20 2.5 L28 20.5 Z"/></svg>
         <div class="page-title">My <span>Profile</span></div>
       </div>
       <div id="profile-hero">
@@ -494,7 +507,7 @@
   let visitedOnly = false;
   let wishlistOnly = false;
   let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first 3=unvisited first 4=country
-  const sortLabels = ['A → Z', 'Z → A', 'Visited first', 'Unvisited first', 'Country'];
+  const sortLabels = ['Name (A → Z)', 'Name (Z → A)', 'Visited first', 'Unvisited first', 'Country'];
 
   // User settings (home country) live in localStorage in both Electron and the browser
   const SETTINGS_KEY = 'powder.settings.v1';
@@ -561,9 +574,10 @@
       render();
     });
 
-    document.getElementById('chip-sort').addEventListener('click', () => {
-      sortMode = (sortMode + 1) % sortLabels.length;
-      document.getElementById('chip-sort').textContent = sortLabels[sortMode];
+    const sortSelect = document.getElementById('sort-select');
+    sortSelect.innerHTML = sortLabels.map((l, i) => `<option value="${i}">${l}</option>`).join('');
+    sortSelect.addEventListener('change', () => {
+      sortMode = Number(sortSelect.value);
       render();
     });
 
@@ -576,7 +590,7 @@
       sortMode = 0;
       document.getElementById('search').value = '';
       document.getElementById('chip-visited').classList.remove('active');
-      document.getElementById('chip-sort').textContent = sortLabels[0];
+      document.getElementById('sort-select').value = '0';
       buildCountryChips();
       render();
     });
@@ -600,7 +614,7 @@
     updateStats();
 
     const filtered = filteredResorts();
-    document.getElementById('result-count').textContent = filtered.length + ' shown';
+    document.getElementById('result-count').textContent = filtered.length;
 
     const list = document.getElementById('resort-list');
     list.innerHTML = '';
