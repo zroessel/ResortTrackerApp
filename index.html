@@ -359,6 +359,13 @@
   .stat-row:nth-child(odd) { background: var(--s1); }
   .stat-row-label { font-size: 14px; color: var(--snow); }
   .stat-row-value { font-size: 14px; font-weight: 600; color: var(--ice); }
+  #home-row { padding: 0 20px 4px; }
+  #home-input {
+    width: 100%; background: var(--s1); border: 1px solid var(--rim); border-radius: 10px;
+    color: var(--snow); font-size: 14px; font-family: inherit; padding: 9px 14px; outline: none;
+    user-select: text; transition: border-color 0.15s;
+  }
+  #home-input:focus { border-color: var(--ice-dim); }
 </style>
 </head>
 <body>
@@ -417,6 +424,11 @@
         <div id="profile-big-num">0</div>
         <div id="profile-sub">of 0 resorts visited</div>
         <div id="profile-bar-track"><div id="profile-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="section-header">Home Country</div>
+      <div id="home-row">
+        <input id="home-input" list="home-options" placeholder="Where are you from?" autocomplete="off">
+        <datalist id="home-options"></datalist>
       </div>
       <div class="section-header">Stats</div>
       <div id="profile-stats"></div>
@@ -481,8 +493,15 @@
   let selectedCountry = 'All';
   let visitedOnly = false;
   let wishlistOnly = false;
-  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first 3=unvisited first
-  const sortLabels = ['A → Z', 'Z → A', 'Visited first', 'Unvisited first'];
+  let sortMode = 0; // 0=A-Z 1=Z-A 2=visited first 3=unvisited first 4=country
+  const sortLabels = ['A → Z', 'Z → A', 'Visited first', 'Unvisited first', 'Country'];
+
+  // User settings (home country) live in localStorage in both Electron and the browser
+  const SETTINGS_KEY = 'powder.settings.v1';
+  let settings = { homeCountry: '' };
+  try { settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; } catch (_) {}
+  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {} }
+  const isHome = c => !!settings.homeCountry && c.toLowerCase() === settings.homeCountry.toLowerCase();
 
   const CONTINENTS = {
     'Canada': 'North America', 'USA': 'North America',
@@ -509,6 +528,22 @@
   // ── Controls ──────────────────────────────────────────────────────────────
 
   function wireControls() {
+    const homeInput = document.getElementById('home-input');
+    document.getElementById('home-options').innerHTML =
+      [...new Set(resorts.map(r => r.country))].sort().map(c => `<option value="${c}">`).join('');
+    homeInput.value = settings.homeCountry;
+    homeInput.addEventListener('change', () => {
+      const typed = homeInput.value.trim();
+      // Snap to the catalog's spelling when it matches (e.g. "usa" → "USA")
+      const match = resorts.find(r => r.country.toLowerCase() === typed.toLowerCase());
+      settings.homeCountry = match ? match.country : typed;
+      homeInput.value = settings.homeCountry;
+      saveSettings();
+      buildCountryChips();
+      buildProfilePage();
+      render();
+    });
+
     document.getElementById('search').addEventListener('input', e => {
       searchQuery = e.target.value.toLowerCase();
       render();
@@ -632,7 +667,8 @@
     if (sortMode === 0) list.sort((a, b) => a.name.localeCompare(b.name));
     else if (sortMode === 1) list.sort((a, b) => b.name.localeCompare(a.name));
     else if (sortMode === 2) list.sort((a, b) => (b.visited - a.visited) || a.name.localeCompare(b.name));
-    else list.sort((a, b) => (a.visited - b.visited) || a.name.localeCompare(b.name));
+    else if (sortMode === 3) list.sort((a, b) => (a.visited - b.visited) || a.name.localeCompare(b.name));
+    else list.sort((a, b) => (isHome(b.country) - isHome(a.country)) || a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
 
     return list;
   }
@@ -649,11 +685,13 @@
   function buildCountryChips() {
     const row = document.getElementById('country-row');
     row.innerHTML = '';
-    const countries = ['All', ...new Set(resorts.map(r => r.country).sort())];
+    const all = [...new Set(resorts.map(r => r.country))].sort();
+    const home = all.filter(isHome);
+    const countries = ['All', ...home, ...all.filter(c => !isHome(c))];
     countries.forEach(c => {
       const chip = document.createElement('button');
       chip.className = 'chip' + (c === selectedCountry ? ' active' : '');
-      chip.textContent = c;
+      chip.textContent = isHome(c) ? '⌂ ' + c : c;
       chip.addEventListener('click', () => {
         selectedCountry = c;
         buildCountryChips();
@@ -716,6 +754,14 @@
     const statsEl = document.getElementById('profile-stats');
     statsEl.innerHTML = '';
     [
+      ...(settings.homeCountry ? (() => {
+        const homeAll = resorts.filter(r => isHome(r.country));
+        const homeVisited = homeAll.filter(r => r.visited).length;
+        return [
+          [`Home resorts (${settings.homeCountry})`, homeAll.length ? `${homeVisited} / ${homeAll.length}` : '—'],
+          ['Resorts abroad', visited.length - homeVisited],
+        ];
+      })() : []),
       ['Countries skied', countries.size],
       ['Continents reached', continents.size],
       ['On wishlist', wishlist],
