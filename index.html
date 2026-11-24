@@ -901,7 +901,12 @@
     const byCountry = tally(r => r.country);
     const clist = document.getElementById('country-list');
     clist.innerHTML = '';
-    Object.keys(byCountry).sort().forEach(c => {
+    // Countries you've skied first (most visited first), then everything else A–Z
+    Object.keys(byCountry).sort((a, b) =>
+      (byCountry[b].visited > 0) - (byCountry[a].visited > 0) ||
+      byCountry[b].visited - byCountry[a].visited ||
+      a.localeCompare(b)
+    ).forEach(c => {
       const { total, visited } = byCountry[c];
       const row = document.createElement('div');
       row.className = 'country-row';
